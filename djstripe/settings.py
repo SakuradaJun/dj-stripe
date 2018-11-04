@@ -53,15 +53,16 @@ trial_period_for_subscriber_callback = getattr(settings,
 DJSTRIPE_WEBHOOK_URL = getattr(settings, "DJSTRIPE_WEBHOOK_URL", r"^webhook/$")
 
 
-def plan_from_stripe_id(stripe_id):
-    payment_plans = getattr(settings, "DJSTRIPE_PLANS", {})
-    plan_id = None
-
-    for key in payment_plans.keys():
-        if payment_plans[key].get("stripe_plan_id") == stripe_id:
-            plan_id = key
-
-    return plan_id
+# def plan_from_stripe_id(stripe_id):
+#     from .models import Plan
+#     payment_plans = getattr(settings, "DJSTRIPE_PLANS", {})
+#     plan_id = None
+#
+#     for key in payment_plans.keys():
+#         if payment_plans[key].get("stripe_plan_id") == stripe_id:
+#             plan_id = key
+#
+#     return plan_id
 
 
 def _check_subscriber_for_email_address(subscriber_model, message):

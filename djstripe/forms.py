@@ -9,11 +9,20 @@
 
 from django import forms
 
-from .settings import PLAN_CHOICES
+from .models import Plan
 
 
 class PlanForm(forms.Form):
-    plan = forms.ChoiceField(choices=PLAN_CHOICES)
+    plan = forms.ChoiceField()
+
+    def __init__(self, *args, **kwargs):
+        super(PlanForm, self).__init__(*args, **kwargs)
+        plan = Plan.objects.last()
+        if not plan:
+            raise Exception('No any plan')
+        self.fields['plan'].choices = (
+            (plan.stripe_id, plan.name),
+        )
 
 
 class CancelSubscriptionForm(forms.Form):

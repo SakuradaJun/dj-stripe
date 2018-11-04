@@ -384,23 +384,34 @@ class Customer(StripeCustomer):
     def subscribe(self, plan, quantity=1, trial_days=None,
                   charge_immediately=True, prorate=djstripe_settings.PRORATION_POLICY):
         stripe_customer = self.stripe_customer
+
+        plan_data = Plan.objects.filter(stripe_id=plan).get().as_dict()
+        # if not plan_data:
+        #     raise Exception('No plan')
+        # raise Exception('Test')
+
         """
         Trial_days corresponds to the value specified by the selected plan
         for the key trial_period_days.
         """
-        if ("trial_period_days" in djstripe_settings.PAYMENTS_PLANS[plan]):
-            trial_days = djstripe_settings.PAYMENTS_PLANS[plan]["trial_period_days"]
+        if plan_data.get('trial_period_days', None) is not None:
+            trial_days = plan_data['trial_period_days']
+
+        # if ("trial_period_days" in djstripe_settings.PAYMENTS_PLANS[plan]):
+        #     trial_days = djstripe_settings.PAYMENTS_PLANS[plan]["trial_period_days"]
+
+        # plan_data
 
         if trial_days:
             resp = stripe_customer.update_subscription(
-                plan=djstripe_settings.PAYMENTS_PLANS[plan]["stripe_plan_id"],
+                plan=plan_data["stripe_plan_id"],
                 trial_end=timezone.now() + datetime.timedelta(days=trial_days),
                 prorate=prorate,
                 quantity=quantity
             )
         else:
             resp = stripe_customer.update_subscription(
-                plan=djstripe_settings.PAYMENTS_PLANS[plan]["stripe_plan_id"],
+                plan=plan_data["stripe_plan_id"],
                 prorate=prorate,
                 quantity=quantity
             )
@@ -748,6 +759,19 @@ class Plan(StripePlan):
         p.save()
 
         self.save()
+
+    def as_dict(self):
+        return dict(
+            stripe_plan_id=self.stripe_id,
+            name=self.name,
+            # description=settings.DJSTRIPE_PLANS[self.name]['description'],
+            price=int(self.amount * 100),
+            interval=self.interval,
+            currency=self.currency,
+
+            trial_period_days=self.trial_period_days,
+            # interval_count=plan_obj.interval_count,
+    )
 
 # Much like registering signal handlers. We import this module so that its registrations get picked up
 # the NO QA directive tells flake8 to not complain about the unused import
